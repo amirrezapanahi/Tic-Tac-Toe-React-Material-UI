@@ -1,8 +1,9 @@
-import { render, screen } from '@testing-library/react';
-import App from './App';
+import { getResult } from './App';
 
-test('renders learn react link', () => {
-  render(<App />);
-  const linkElement = screen.getByText(/learn react/i);
-  expect(linkElement).toBeInTheDocument();
+test('identifies a winning line', () => {
+  expect(getResult(['X', 'X', 'X', null, null, null, null, null, null])).toEqual({ winner: 'X', line: [0, 1, 2], draw: false });
+});
+
+test('identifies a draw', () => {
+  expect(getResult(['X', 'O', 'X', 'X', 'O', 'O', 'O', 'X', 'X'])).toEqual({ winner: null, line: [], draw: true });
 });

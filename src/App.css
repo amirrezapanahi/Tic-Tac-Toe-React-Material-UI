@@ -1,20 +1,13 @@
-ol,
-ul {
-  padding-left: 30px;
-}
-
-.board-row:after {
-  clear: both;
-  content: '';
-  display: table;
-}
-
-.square--green {
-  background: green;
-}
-
-.button--green {
-  background-color: #4caf50;
-  color: #000;
-  font-weight: bold;
-}
+.app-shell { min-height: 100vh; background: radial-gradient(circle at 10% 0%, color-mix(in srgb, var(--accent) 16%, transparent), transparent 30rem), var(--bg); }
+.site-header { max-width: 1120px; margin: auto; padding: 22px 24px; display: flex; align-items: center; justify-content: space-between; }
+.brand, nav a { color: var(--text); text-decoration: none; font-weight: 800; } .brand { letter-spacing: .08em; } .brand span { color: var(--accent-2); } nav { display: flex; align-items: center; gap: 18px; } nav a { font-size: .92rem; color: var(--muted); }
+.theme-toggle, .segmented-control button, .text-button { border: 0; background: transparent; color: var(--text); } .theme-toggle { border: 1px solid var(--line); border-radius: 999px; padding: 8px 12px; font-size: .86rem; }
+.game-layout { max-width: 1000px; margin: 28px auto 0; padding: 0 24px 52px; display: grid; grid-template-columns: minmax(0, 620px) 260px; align-items: start; gap: 24px; }
+.game-card, .moves-card { background: var(--surface); border: 1px solid var(--line); border-radius: 24px; box-shadow: var(--shadow); }.game-card { padding: clamp(24px, 5vw, 48px); text-align: center; }.moves-card { padding: 24px; }
+.eyebrow { color: var(--accent); font-size: .72rem; font-weight: 800; letter-spacing: .16em; }.game-card h1 { margin: 8px 0 4px; font-size: clamp(2.2rem, 7vw, 3.8rem); letter-spacing: -.06em; }.subtitle, .moves-card p { color: var(--muted); margin: 0; }
+.controls { display: flex; justify-content: center; gap: 22px; flex-wrap: wrap; margin: 32px 0 20px; }.control-group { display: grid; gap: 7px; text-align: left; }.control-label { color: var(--muted); font-size: .75rem; font-weight: 800; text-transform: uppercase; letter-spacing: .08em; }.segmented-control { display: flex; padding: 4px; gap: 3px; background: var(--surface-alt); border-radius: 10px; }.segmented-control button { border-radius: 7px; padding: 7px 10px; font-size: .82rem; }.segmented-control .selected { background: var(--surface); box-shadow: 0 2px 8px rgba(0, 0, 0, .12); color: var(--accent); font-weight: 800; }
+.scoreboard { display: grid; grid-template-columns: repeat(3, 1fr); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); padding: 14px 0; }.scoreboard div + div { border-left: 1px solid var(--line); }.scoreboard strong, .scoreboard span { display: block; }.scoreboard strong { font-size: 1.4rem; }.scoreboard span { color: var(--muted); font-size: .73rem; margin-top: 2px; }.status { min-height: 24px; font-weight: 800; margin: 22px 0 16px; color: var(--accent); }.status.finished { color: var(--accent-2); }
+.board { width: min(100%, 390px); margin: auto; display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }.square { aspect-ratio: 1; border: 1px solid var(--line); border-radius: 18px; background: var(--surface-alt); color: var(--text); font-size: clamp(2rem, 10vw, 4rem); font-weight: 800; transition: transform .15s, border-color .15s, background .15s; }.square:not(:disabled):hover { transform: translateY(-3px); border-color: var(--accent); }.square:disabled { cursor: default; }.mark-x { color: var(--accent); }.mark-o { color: var(--accent-2); }.square.winning { background: color-mix(in srgb, var(--accent-2) 20%, var(--surface-alt)); border-color: var(--accent-2); }
+.actions { display: flex; align-items: center; justify-content: center; gap: 14px; margin-top: 25px; }.primary-button { border: 0; border-radius: 10px; padding: 11px 18px; color: white; background: var(--accent); box-shadow: 0 8px 18px color-mix(in srgb, var(--accent) 28%, transparent); font-weight: 800; }.text-button { color: var(--muted); font-weight: 700; padding: 9px; }
+.moves-card h2 { margin: 0 0 16px; font-size: 1rem; }.moves-card ol { list-style: none; padding: 0; margin: 0; display: grid; gap: 10px; }.moves-card li { display: flex; align-items: center; gap: 9px; color: var(--muted); font-size: .82rem; }.moves-card b { display: grid; place-items: center; width: 25px; height: 25px; border-radius: 7px; background: var(--surface-alt); color: var(--accent); }
+@media (max-width: 760px) { .game-layout { grid-template-columns: 1fr; margin-top: 8px; }.moves-card { order: 2; }.site-header { padding-inline: 18px; }.game-layout { padding-inline: 16px; }.game-card { border-radius: 20px; } }

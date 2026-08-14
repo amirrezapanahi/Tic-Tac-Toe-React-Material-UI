@@ -1,167 +1,92 @@
-import React from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import Board from './components/Board';
 import Header from './components/Header';
-import "./App.css";
-import Button from '@material-ui/core/Button';
-import Container from '@material-ui/core/Container';
-import Typography from '@material-ui/core/Typography';
-import Box from '@material-ui/core/Box';
+import './App.css';
 
+const emptyBoard = () => Array(9).fill(null);
+const lines = [[0, 1, 2], [3, 4, 5], [6, 7, 8], [0, 3, 6], [1, 4, 7], [2, 5, 8], [0, 4, 8], [2, 4, 6]];
 
-document.body.style.backgroundColor = "#0d1117";
-
-const calculateWinner = (squares) => {
-  const lines = [
-    [0, 1, 2],
-    [3, 4, 5],
-    [6, 7, 8],
-    [0, 3, 6],
-    [1, 4, 7],
-    [2, 5, 8],
-    [0, 4, 8],
-    [2, 4, 6],
-  ];
-
-  for (let i = 0; i < lines.length; i += 1) {
-    const [a, b, c] = lines[i];
-    if (squares[a] && squares[a] === squares[b] && squares[a] === squares[c]) {
-      return { winner: squares[a], winnerRow: lines[i] };
-    }
+export const getResult = (squares) => {
+  for (const line of lines) {
+    const [a, b, c] = line;
+    if (squares[a] && squares[a] === squares[b] && squares[a] === squares[c]) return { winner: squares[a], line, draw: false };
   }
-
-  return { winner: null, winnerRow: null };
+  return { winner: null, line: [], draw: squares.every(Boolean) };
 };
 
-const getLocation = (move) => {
-  const locationMap = {
-    0: 'row: 1, col: 1',
-    1: 'row: 1, col: 2',
-    2: 'row: 1, col: 3',
-    3: 'row: 2, col: 1',
-    4: 'row: 2, col: 2',
-    5: 'row: 2, col: 3',
-    6: 'row: 3, col: 1',
-    7: 'row: 3, col: 2',
-    8: 'row: 3, col: 3',
-  };
-
-  return locationMap[move];
+const bestMove = (board, computer, human) => {
+  const available = board.map((cell, index) => (cell ? null : index)).filter((index) => index !== null);
+  for (const mark of [computer, human]) {
+    for (const index of available) {
+      const trial = [...board]; trial[index] = mark;
+      if (getResult(trial).winner === mark) return index;
+    }
+  }
+  if (!board[4]) return 4;
+  return [0, 2, 6, 8].find((index) => !board[index]) ?? available[0];
 };
 
-const initialState = {
-  history: [
-    {
-      squares: Array(9).fill(null),
-    },
-  ],
-  currentStepNumber: 0,
-  xIsNext: true,
-};
+function App() {
+  const [board, setBoard] = useState(emptyBoard);
+  const [turn, setTurn] = useState('X');
+  const [mode, setMode] = useState('solo');
+  const [humanMark, setHumanMark] = useState('X');
+  const [noDrawMode, setNoDrawMode] = useState(false);
+  const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'dark');
+  const [scores, setScores] = useState({ X: 0, O: 0, draw: 0 });
+  const [moves, setMoves] = useState([]);
+  const [notice, setNotice] = useState('');
+  const result = useMemo(() => getResult(board), [board]);
+  const computerMark = humanMark === 'X' ? 'O' : 'X';
+  const computerTurn = mode === 'solo' && turn === computerMark && !result.winner && !result.draw;
 
-class Game extends React.Component {
-  constructor(props) {
-    super(props);
-    this.state = initialState;
-  }
+  useEffect(() => { document.documentElement.dataset.theme = theme; localStorage.setItem('theme', theme); }, [theme]);
 
-  handleClick(i) {
-    const history = this.state.history.slice(0, this.state.currentStepNumber + 1);
-    const current = history[history.length - 1];
-    const squares = current.squares.slice();
+  const startRound = () => { setBoard(emptyBoard()); setTurn('X'); setMoves([]); setNotice(''); };
+  const playMove = useCallback((index) => {
+    if (board[index] || result.winner || result.draw) return;
+    const next = [...board]; next[index] = turn;
+    const nextResult = getResult(next);
+    setNotice('');
+    setBoard(next); setMoves((current) => [...current, { mark: turn, index }]);
+    if (nextResult.winner) setScores((current) => ({ ...current, [nextResult.winner]: current[nextResult.winner] + 1 }));
+    else if (nextResult.draw && noDrawMode) {
+      setBoard(emptyBoard());
+      setMoves([]);
+      setTurn(turn === 'X' ? 'O' : 'X');
+      setNotice('No draw — the board is refreshed. Keep playing!');
+    } else if (nextResult.draw) setScores((current) => ({ ...current, draw: current.draw + 1 }));
+    else setTurn(turn === 'X' ? 'O' : 'X');
+  }, [board, noDrawMode, result, turn]);
 
-    if (calculateWinner(squares).winner || squares[i]) {
-      return;
-    }
-    squares[i] = this.state.xIsNext ? 'X' : 'O';
-    this.setState({
-      history: history.concat([
-        {
-          squares,
-          currentLocation: getLocation(i),
-          stepNumber: history.length,
-        },
-      ]),
-      xIsNext: !this.state.xIsNext,
-      currentStepNumber: history.length,
-    });
-  }
+  useEffect(() => {
+    if (!computerTurn) return undefined;
+    const timer = window.setTimeout(() => playMove(bestMove(board, computerMark, humanMark)), 420);
+    return () => window.clearTimeout(timer);
+  }, [computerTurn, board, computerMark, humanMark, playMove]);
 
-  jumpTo(step) {
-    this.setState({
-      currentStepNumber: step,
-      xIsNext: step % 2 === 0,
-    });
-  }
+  const status = result.winner ? `${result.winner} wins this round!` : result.draw ? 'It’s a draw — great defence.' : notice || (computerTurn ? 'Computer is thinking…' : `Player ${turn}'s turn`);
+  const changeMode = (nextMode) => { setMode(nextMode); startRound(); };
+  const changeMark = (mark) => { setHumanMark(mark); startRound(); };
 
-  sortMoves() {
-    this.setState({
-      history: this.state.history.reverse(),
-    });
-  }
-
-  reset() {
-    this.setState(initialState);
-  }
-
-  render() {
-    const { history } = this.state;
-    const current = history[this.state.currentStepNumber];
-    const { winner, winnerRow } = calculateWinner(current.squares);
-
-    const moves = history.map((step, move) => {
-      const currentLocation = step.currentLocation ? `(${step.currentLocation})` : '';
-      const desc = step.stepNumber ? `Go to move #${step.stepNumber}` : 'Go to game start';
-      const classButton = move === this.state.currentStepNumber ? 'button--green' : '';
-
-      return (
-        <li key={move}>
-          <button className= {classButton}  onClick={() => this.jumpTo(move)}>
-            {`${desc} ${currentLocation}`}
-          </button>
-        </li>
-      );
-    });
-
-    let status;
-    if (winner) {
-      status = `Winner ${winner}`;
-    } else if (history.length === 10) {
-      status = 'Draw. No one won.';
-    } else {
-      status = `Next player: ${this.state.xIsNext ? 'X' : 'O'}`;
-    }
-
-    return (
-      <div>
-        <Header/>
-        <div>
-        <Container>
-          <Container style={{ display: 'flex',alignItems: 'center',justifyContent: 'center'}}>
-            <Board
-                squares={current.squares}
-                winnerSquares={winnerRow}
-                onClick={i => this.handleClick(i)}
-            />
-          </Container>
-          
-          <Typography style={{color: "#f0883e"}}  align="center" variant="h5">
-            {status}
-          </Typography>
-          <br></br>
-          <Box textAlign='center'>
-            <Button 
-              variant="contained" 
-              style={{backgroundColor: "#8957e5",color: "#ffffff"}} 
-              onClick={() => this.reset()}>
-                New game
-            </Button>
-          </Box>
-
-        </Container>
-         </div>
-     </div>
-    );
-  }
+  return <div className="app-shell">
+    <Header theme={theme} onThemeToggle={() => setTheme(theme === 'dark' ? 'light' : 'dark')} />
+    <main className="game-layout">
+      <section className="game-card" aria-labelledby="game-title">
+        <div className="eyebrow">TACTICAL CLASSIC</div><h1 id="game-title">Tic-Tac-Toe</h1><p className="subtitle">A quick match, polished for every screen.</p>
+        <div className="controls">
+          <div className="control-group"><span className="control-label">Mode</span><div className="segmented-control"><button className={mode === 'solo' ? 'selected' : ''} onClick={() => changeMode('solo')}>Vs computer</button><button className={mode === 'duo' ? 'selected' : ''} onClick={() => changeMode('duo')}>Two players</button></div></div>
+          {mode === 'solo' && <div className="control-group"><span className="control-label">Your mark</span><div className="segmented-control">{['X', 'O'].map((mark) => <button key={mark} className={humanMark === mark ? 'selected' : ''} onClick={() => changeMark(mark)}>{mark}</button>)}</div></div>}
+          <div className="control-group"><span className="control-label">Draw rule</span><div className="segmented-control"><button className={!noDrawMode ? 'selected' : ''} onClick={() => { setNoDrawMode(false); startRound(); }}>Allow draw</button><button className={noDrawMode ? 'selected' : ''} onClick={() => { setNoDrawMode(true); startRound(); }}>No draw</button></div></div>
+        </div>
+        <div className="scoreboard"><div><strong>{scores.X}</strong><span>X wins</span></div><div><strong>{scores.draw}</strong><span>Draws</span></div><div><strong>{scores.O}</strong><span>O wins</span></div></div>
+        <p className={`status ${result.winner || result.draw ? 'finished' : ''}`} aria-live="polite">{status}</p>
+        <Board squares={board} winnerSquares={result.line} disabled={computerTurn} onPlay={playMove} />
+        <div className="actions"><button className="primary-button" onClick={startRound}>New round</button><button className="text-button" onClick={() => setScores({ X: 0, O: 0, draw: 0 })}>Reset score</button></div>
+      </section>
+      <aside className="moves-card"><h2>Round moves</h2>{moves.length ? <ol>{moves.map((move, index) => <li key={`${move.mark}-${move.index}`}><b>{move.mark}</b><span>Move {index + 1} · row {Math.floor(move.index / 3) + 1}, col {(move.index % 3) + 1}</span></li>)}</ol> : <p>Your moves will appear here.</p>}</aside>
+    </main>
+  </div>;
 }
 
-export default Game;
+export default App;
