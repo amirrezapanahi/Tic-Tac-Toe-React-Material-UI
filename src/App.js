@@ -81,8 +81,11 @@ function App() {
         </div>
         <div className="scoreboard"><div><strong>{scores.X}</strong><span>X wins</span></div><div><strong>{scores.draw}</strong><span>Draws</span></div><div><strong>{scores.O}</strong><span>O wins</span></div></div>
         <p className={`status ${result.winner || result.draw ? 'finished' : ''}`} aria-live="polite">{status}</p>
-        <Board squares={board} winnerSquares={result.line} disabled={computerTurn} onPlay={playMove} />
-        <div className="actions"><button className="primary-button" onClick={startRound}>New round</button><button className="text-button" onClick={() => setScores({ X: 0, O: 0, draw: 0 })}>Reset score</button></div>
+        <div className="board-panel"><Board squares={board} winnerSquares={result.line} disabled={computerTurn} onPlay={playMove} /></div>
+        <div className="actions">
+          <button className="primary-button" onClick={startRound}>{result.winner || result.draw ? 'Play again' : 'Restart round'}</button>
+          <button className="text-button" onClick={() => setScores({ X: 0, O: 0, draw: 0 })}>Reset score</button>
+        </div>
       </section>
       <aside className="moves-card"><h2>Round moves</h2>{moves.length ? <ol>{moves.map((move, index) => <li key={`${move.mark}-${move.index}`}><b>{move.mark}</b><span>Move {index + 1} · row {Math.floor(move.index / 3) + 1}, col {(move.index % 3) + 1}</span></li>)}</ol> : <p>Your moves will appear here.</p>}</aside>
     </main>
